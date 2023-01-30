@@ -22,24 +22,25 @@ const $ = (id) => document.getElementById(id);
 const ctx = $("board").getContext("2d");
 let turn = 0;
 let board = [
-    [new piece("R", 0, 0, "black"), new piece("Kn", 1, 0, "black"), new piece("B", 2, 0, "black"), new piece("K", 3, 0, "black"), new piece("Q", 4, 0, "black"), new piece("B", 5, 0, "black"), new piece("Kn", 6, 0, "black"), new piece("R", 7, 0, "black")],
+    [new piece("R", 0, 0, "black"), new piece("Kn", 1, 0, "black"), new piece("B", 2, 0, "black"), new piece("Q", 3, 0, "black"), new piece("K", 4, 0, "black"), new piece("B", 5, 0, "black"), new piece("Kn", 6, 0, "black"), new piece("R", 7, 0, "black")],
     [new piece("P", 0, 1, "black"), new piece("P", 1, 1, "black"), new piece("P", 2, 1, "black"), new piece("P", 3, 1, "black"), new piece("P", 4, 1, "black"), new piece("P", 5, 1, "black"), new piece("P", 6, 1, "black"), new piece("P", 7, 1, "black")],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [new piece("P", 0, 6, "white"), new piece("P", 1, 6, "white"), new piece("P", 2, 6, "white"), new piece("P", 3, 6, "white"), new piece("P", 4, 6, "white"), new piece("P", 5, 6, "white"), new piece("P", 6, 6, "white"), new piece("P", 7, 6, "white")],
-    [new piece("R", 0, 7, "white"), new piece("Kn", 1, 7, "white"), new piece("B", 2, 7, "white"), new piece("K", 3, 7, "white"), new piece("Q", 4, 7, "white"), new piece("B", 5, 7, "white"), new piece("Kn", 6, 7, "white"), new piece("R", 7, 7, "white")]
+    [new piece("R", 0, 7, "white"), new piece("Kn", 1, 7, "white"), new piece("B", 2, 7, "white"), new piece("Q", 3, 7, "white"), new piece("K", 4, 7, "white"), new piece("B", 5, 7, "white"), new piece("Kn", 6, 7, "white"), new piece("R", 7, 7, "white")]
 ];
 let selected = [-1, -1];
 let moves = [];
 
 let enPassant = false;
+let castling = false;
 
 function displayGrid() {
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
-            ctx.fillStyle = ((i + j) % 2 == 0) ? "#804112" : "grey";
+            ctx.fillStyle = ((i + j) % 2 == 1) ? "#804112" : "grey";
             ctx.fillRect(i * 100, j * 100, 100, 100);
         }
     }
@@ -69,6 +70,7 @@ function updateSelected() {
 function displayMoves() {
     moves = [];
     enPassant = false;
+    castling = false;
     if ((turn % 2 == 0 && board[selected[1]][selected[0]].c == "white") || (turn % 2 == 1 && board[selected[1]][selected[0]].c == "black")) {
         switch (board[selected[1]][selected[0]].n) {
             case "P":
@@ -271,12 +273,22 @@ function king(){
     if(valid(selected[1] + 1, selected[0] + 1)) moves.push([selected[1] + 1, selected[0] + 1]);
     if(valid(selected[1] + 1, selected[0])) moves.push([selected[1] + 1, selected[0]]);
     if(valid(selected[1] + 1, selected[0] - 1)) moves.push([selected[1] + 1, selected[0] - 1]);
-    if(valid(selected[1], selected[0] - 1)) moves.push([selected[1], selected[0] + 1]);
-    if(valid(selected[1], selected[0] + 1)) moves.push([selected[1], selected[0] - 1]);
+    if(valid(selected[1], selected[0] - 1)) moves.push([selected[1], selected[0] - 1]);
+    if(valid(selected[1], selected[0] + 1)) moves.push([selected[1], selected[0] + 1]);
     if(valid(selected[1] - 1, selected[0] + 1)) moves.push([selected[1] - 1, selected[0] + 1]);
     if(valid(selected[1] - 1, selected[0])) moves.push([selected[1] - 1,selected[0]]);
     if(valid(selected[1] - 1, selected[0] - 1)) moves.push([selected[1] - 1, selected[0] - 1]);
-    console.log(moves);
+    if(board[selected[1]][selected[0]].hasMoved == false){
+        if(board[selected[1]][0].hasMoved == false&&board[selected[1]][1] == 0&&board[selected[1]][2] == 0&&board[selected[1]][3] == 0){
+            moves.push([selected[1],2]);
+            castling = true;
+        }
+        if(board[selected[1]][7].hasMoved == false&&board[selected[1]][5] == 0&&board[selected[1]][6] == 0){
+            moves.push([selected[1],6]);
+            castling = true;
+        }
+        
+    }
     moves = checkInvalid(moves);
     return moves;
 }
@@ -301,6 +313,9 @@ document.addEventListener("click", (e) => {
                 if (input[1] == moves[i][0] && input[0] == moves[i][1]) {
                     if(enPassant&&moves[i][1] - selected[i][0] !=0&&board[moves[i][0]][moves[i][1]]==0){
                         board[selected[1]][moves[i][1]] = 0;
+                    }
+                    if(castling&&Math.abs(selected[0] - moves[i][1]) > 1){
+                        board[selected[1]][0] = 0;
                     }
                     board[moves[i][0]][moves[i][1]] = board[selected[1]][selected[0]];
                     board[selected[1]][selected[0]] = 0;
