@@ -14,7 +14,6 @@ class piece {
         ctx.font = "40px Arial"
         ctx.textAlign = "center";
         ctx.fillText(this.n, this.x * 100 + 50, this.y * 100 + 62);
-        //console.log(ctx, ctx.fillStyle, this.n);
     }
 }
 
@@ -37,7 +36,7 @@ let moves = [];
 let enPassant = false;
 let castling = false;
 
-function displayGrid() {
+function displayGrid(b) {
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             ctx.fillStyle = ((i + j) % 2 == 1) ? "#804112" : "grey";
@@ -46,36 +45,36 @@ function displayGrid() {
     }
 }
 
-function displayPieces() {
-    for (let i = 0; i < board.length; i++) {
-        for (let j = 0; j < board[i].length; j++) {
-            if (board[i][j] != 0) {
-                board[i][j].display(ctx);
+function displayPieces(b) {
+    for (let i = 0; i < b.length; i++) {
+        for (let j = 0; j < b[i].length; j++) {
+            if (b[i][j] != 0) {
+                b[i][j].display(ctx);
             }
         }
     }
 }
 
-function updateSelected() {
-    displayGrid();
-    displayPieces();
+function updateSelected(b) {
+    displayGrid(b);
+    displayPieces(b);
     ctx.fillStyle = "rgba(200,200,200,0.5)";
     ctx.fillRect(selected[0] * 100, selected[1] * 100, 100, 100);
-    if (board[selected[1]][selected[0]] != 0) {
-        board[selected[1]][selected[0]].display(ctx);
-        displayMoves();
+    if (b[selected[1]][selected[0]] != 0) {
+        b[selected[1]][selected[0]].display(ctx);
+        displayMoves(b);
     }
 }
 
-function displayMoves() {
+function displayMoves(b) {
     moves = [];
     enPassant = false;
     castling = false;
-    if ((turn % 2 == 0 && board[selected[1]][selected[0]].c == "white") || (turn % 2 == 1 && board[selected[1]][selected[0]].c == "black")) {
-        moves = getMoves();
-        moves = checkInvalid(moves);
+    if ((turn % 2 == 0 && b[selected[1]][selected[0]].c == "white") || (turn % 2 == 1 && b[selected[1]][selected[0]].c == "black")) {
+        moves = getMoves(b);
+        moves = checkInvalid(moves,b);
         for (let i = 0; i < moves.length; i++) {
-            if (board[moves[i][0]][moves[i][1]] == 0) {
+            if (b[moves[i][0]][moves[i][1]] == 0) {
                 ctx.beginPath();
                 ctx.arc(moves[i][1] * 100 + 50, moves[i][0] * 100 + 50, 10, 0, Math.PI * 2);
                 ctx.stroke();
@@ -89,67 +88,66 @@ function displayMoves() {
     }
 }
 
-function getMoves() {
+function getMoves(b) {
     let moves = [];
-    switch (board[selected[1]][selected[0]].n) {
+    switch (b[selected[1]][selected[0]].n) {
         case "P":
-            moves = pawn();
+            moves = pawn(b);
             break;
         case "B":
-            moves = bishop();
+            moves = bishop(b);
             break;
         case "R":
-            moves = rook();
+            moves = rook(b);
             break;
         case "Q":
-            moves = queen();
+            moves = queen(b);
             break;
         case "Kn":
-            moves = knight();
+            moves = knight(b);
             break;
         case "K":
-            moves = king();
+            moves = king(b);
             break;
     }
     return moves;
 }
 
-function pawn() {
+function pawn(b) {
     let mult = 1 + (-2 * ((turn + 1) % 2));
     let moves = [];
-    if (board[selected[1] + mult][selected[0]] == 0) {
+    if (b[selected[1] + mult][selected[0]] == 0) {
         moves.push([selected[1] + mult, selected[0]]);
     }
-    if (board[selected[1]][selected[0]].hasMoved == false && board[selected[1] + (2 * mult)][selected[0]] == 0 && moves.length > 0) {
+    if (b[selected[1]][selected[0]].hasMoved == false && b[selected[1] + (2 * mult)][selected[0]] == 0 && moves.length > 0) {
         moves.push([selected[1] + (2 * mult), selected[0]]);
     }
-    if (selected[1] + mult >= 0 && selected[1] + mult < 8 && selected[0] + 1 < 8 && board[selected[1] + mult][selected[0] + 1] != 0 && board[selected[1] + mult][selected[0] + 1].c != board[selected[1]][selected[0]].c) {
+    if (selected[1] + mult >= 0 && selected[1] + mult < 8 && selected[0] + 1 < 8 && b[selected[1] + mult][selected[0] + 1] != 0 && b[selected[1] + mult][selected[0] + 1].c != b[selected[1]][selected[0]].c) {
         moves.push([selected[1] + mult, selected[0] + 1]);
     }
-    if (selected[1] + mult >= 0 && selected[1] + mult < 8 && selected[0] - 1 >= 0 && board[selected[1] + mult][selected[0] - 1] != 0 && board[selected[1] + mult][selected[0] - 1].c != board[selected[1]][selected[0]].c) {
+    if (selected[1] + mult >= 0 && selected[1] + mult < 8 && selected[0] - 1 >= 0 && b[selected[1] + mult][selected[0] - 1] != 0 && b[selected[1] + mult][selected[0] - 1].c != b[selected[1]][selected[0]].c) {
         moves.push([selected[1] + mult, selected[0] - 1]);
     }
-    //  console.log(board[selected[1]][selected[0] + 1].moveCount);
-    if (selected[0] + 1 < 8 && board[selected[1]][selected[0] + 1].n == "P" && board[selected[1]][selected[0] + 1].moveCount == 1 && (board[selected[1]][selected[0] + 1].y == 3 || board[selected[1]][selected[0] + 1].y == 4) && board[selected[1]][selected[0] + 1].c != board[selected[1]][selected[0]].c && board[selected[1]][selected[0] + 1].lastTurn == turn - 1) {
+    if (selected[0] + 1 < 8 && b[selected[1]][selected[0] + 1].n == "P" && b[selected[1]][selected[0] + 1].moveCount == 1 && (b[selected[1]][selected[0] + 1].y == 3 || b[selected[1]][selected[0] + 1].y == 4) && b[selected[1]][selected[0] + 1].c != b[selected[1]][selected[0]].c && b[selected[1]][selected[0] + 1].lastTurn == turn - 1) {
         moves.push([selected[1] + mult, selected[0] + 1]);
         enPassant = true;
     }
-    if (selected[0] - 1 >= 0 && board[selected[1]][selected[0] - 1].n == "P" && board[selected[1]][selected[0] - 1].moveCount == 1 && (board[selected[1]][selected[0] - 1].y == 3 || board[selected[1]][selected[0] - 1].y == 4) && board[selected[1]][selected[0] - 1].c != board[selected[1]][selected[0]].c && board[selected[1]][selected[0] - 1].lastTurn == turn - 1) {
+    if (selected[0] - 1 >= 0 && b[selected[1]][selected[0] - 1].n == "P" && b[selected[1]][selected[0] - 1].moveCount == 1 && (b[selected[1]][selected[0] - 1].y == 3 || b[selected[1]][selected[0] - 1].y == 4) && b[selected[1]][selected[0] - 1].c != b[selected[1]][selected[0]].c && b[selected[1]][selected[0] - 1].lastTurn == turn - 1) {
         moves.push([selected[1] + mult, selected[0] - 1]);
         enPassant = true;
     }
     return moves;
 }
 
-function bishop() {
+function bishop(b) {
     let moves = [];
     let finished = [false, false, false, false];
-    let sC = board[selected[1]][selected[0]].c;
+    let sC = b[selected[1]][selected[0]].c;
     for (let i = 1; i < 8; i++) {
         if (!finished[0] && selected[1] + i < 8 && selected[0] + i < 8) {
-            if (board[selected[1] + i][selected[0] + i] == 0) {
+            if (b[selected[1] + i][selected[0] + i] == 0) {
                 moves.push([selected[1] + i, selected[0] + i]);
-            } else if (board[selected[1] + i][selected[0] + i].c != sC) {
+            } else if (b[selected[1] + i][selected[0] + i].c != sC) {
                 moves.push([selected[1] + i, selected[0] + i]);
                 finished[0] = true;
             } else {
@@ -157,9 +155,9 @@ function bishop() {
             }
         }
         if (!finished[1] && selected[1] + i < 8 && selected[0] - i >= 0) {
-            if (board[selected[1] + i][selected[0] - i] == 0) {
+            if (b[selected[1] + i][selected[0] - i] == 0) {
                 moves.push([selected[1] + i, selected[0] - i]);
-            } else if (board[selected[1] + i][selected[0] - i].c != sC) {
+            } else if (b[selected[1] + i][selected[0] - i].c != sC) {
                 moves.push([selected[1] + i, selected[0] - i]);
                 finished[1] = true;
             } else {
@@ -167,9 +165,9 @@ function bishop() {
             }
         }
         if (!finished[2] && selected[1] - i >= 0 && selected[0] + i < 8) {
-            if (board[selected[1] - i][selected[0] + i] == 0) {
+            if (b[selected[1] - i][selected[0] + i] == 0) {
                 moves.push([selected[1] - i, selected[0] + i]);
-            } else if (board[selected[1] - i][selected[0] + i].c != sC) {
+            } else if (b[selected[1] - i][selected[0] + i].c != sC) {
                 moves.push([selected[1] - i, selected[0] + i]);
                 finished[2] = true;
             } else {
@@ -177,9 +175,9 @@ function bishop() {
             }
         }
         if (!finished[3] && selected[1] - i >= 0 && selected[0] - i >= 0) {
-            if (board[selected[1] - i][selected[0] - i] == 0) {
+            if (b[selected[1] - i][selected[0] - i] == 0) {
                 moves.push([selected[1] - i, selected[0] - i]);
-            } else if (board[selected[1] - i][selected[0] - i].c != sC) {
+            } else if (b[selected[1] - i][selected[0] - i].c != sC) {
                 moves.push([selected[1] - i, selected[0] - i]);
                 finished[3] = true;
             } else {
@@ -190,15 +188,15 @@ function bishop() {
     return moves;
 }
 
-function rook() {
+function rook(b) {
     let moves = [];
     let finished = [false, false, false, false];
-    let sC = board[selected[1]][selected[0]].c;
+    let sC = b[selected[1]][selected[0]].c;
     for (let i = 1; i < 8; i++) {
         if (!finished[0] && selected[1] + i < 8) {
-            if (board[selected[1] + i][selected[0]] == 0) {
+            if (b[selected[1] + i][selected[0]] == 0) {
                 moves.push([selected[1] + i, selected[0]]);
-            } else if (board[selected[1] + i][selected[0]].c != sC) {
+            } else if (b[selected[1] + i][selected[0]].c != sC) {
                 moves.push([selected[1] + i, selected[0]]);
                 finished[0] = true;
             } else {
@@ -206,9 +204,9 @@ function rook() {
             }
         }
         if (!finished[1] && selected[0] - i >= 0) {
-            if (board[selected[1]][selected[0] - i] == 0) {
+            if (b[selected[1]][selected[0] - i] == 0) {
                 moves.push([selected[1], selected[0] - i]);
-            } else if (board[selected[1]][selected[0] - i].c != sC) {
+            } else if (b[selected[1]][selected[0] - i].c != sC) {
                 moves.push([selected[1], selected[0] - i]);
                 finished[1] = true;
             } else {
@@ -216,9 +214,9 @@ function rook() {
             }
         }
         if (!finished[2] && selected[0] + i < 8) {
-            if (board[selected[1]][selected[0] + i] == 0) {
+            if (b[selected[1]][selected[0] + i] == 0) {
                 moves.push([selected[1], selected[0] + i]);
-            } else if (board[selected[1]][selected[0] + i].c != sC) {
+            } else if (b[selected[1]][selected[0] + i].c != sC) {
                 moves.push([selected[1], selected[0] + i]);
                 finished[2] = true;
             } else {
@@ -226,9 +224,9 @@ function rook() {
             }
         }
         if (!finished[3] && selected[1] - i >= 0) {
-            if (board[selected[1] - i][selected[0]] == 0) {
+            if (b[selected[1] - i][selected[0]] == 0) {
                 moves.push([selected[1] - i, selected[0]]);
-            } else if (board[selected[1] - i][selected[0]].c != sC) {
+            } else if (b[selected[1] - i][selected[0]].c != sC) {
                 moves.push([selected[1] - i, selected[0]]);
                 finished[3] = true;
             } else {
@@ -239,9 +237,9 @@ function rook() {
     return moves;
 }
 
-function queen() {
-    let moves = bishop();
-    let moves2 = rook();
+function queen(b) {
+    let moves = bishop(b);
+    let moves2 = rook(b);
     let movesOut = new Array(moves.length + moves2.length);
     for (let i = 0; i < movesOut.length; i++) {
         if (i < moves.length) {
@@ -253,10 +251,10 @@ function queen() {
     return movesOut;
 }
 
-function knight() {
+function knight(b) {
     let moves = [];
-    let sC = board[selected[1]][selected[0]].c;
-    const valid = (i, j) => (i < 8 && i > -1 && j < 8 && j > -1 && (board[i][j] == 0 || board[i][j].c != sC)) ? true : false;
+    let sC = b[selected[1]][selected[0]].c;
+    const valid = (i, j) => (i < 8 && i > -1 && j < 8 && j > -1 && (b[i][j] == 0 || b[i][j].c != sC)) ? true : false;
     if (valid(selected[1] + 2, selected[0] + 1)) moves.push([selected[1] + 2, selected[0] + 1]);
     if (valid(selected[1] - 2, selected[0] + 1)) moves.push([selected[1] - 2, selected[0] + 1]);
     if (valid(selected[1] + 2, selected[0] - 1)) moves.push([selected[1] + 2, selected[0] - 1]);
@@ -268,10 +266,10 @@ function knight() {
     return moves;
 }
 
-function king() {
+function king(b) {
     let moves = [];
-    let sC = board[selected[1]][selected[0]].c;
-    const valid = (i, j) => (i < 8 && i > -1 && j < 8 && j > -1 && (board[i][j] == 0 || board[i][j].c != sC)) ? true : false;
+    let sC = b[selected[1]][selected[0]].c;
+    const valid = (i, j) => (i < 8 && i > -1 && j < 8 && j > -1 && (b[i][j] == 0 || b[i][j].c != sC)) ? true : false;
     if (valid(selected[1] + 1, selected[0] + 1)) moves.push([selected[1] + 1, selected[0] + 1]);
     if (valid(selected[1] + 1, selected[0])) moves.push([selected[1] + 1, selected[0]]);
     if (valid(selected[1] + 1, selected[0] - 1)) moves.push([selected[1] + 1, selected[0] - 1]);
@@ -280,12 +278,12 @@ function king() {
     if (valid(selected[1] - 1, selected[0] + 1)) moves.push([selected[1] - 1, selected[0] + 1]);
     if (valid(selected[1] - 1, selected[0])) moves.push([selected[1] - 1, selected[0]]);
     if (valid(selected[1] - 1, selected[0] - 1)) moves.push([selected[1] - 1, selected[0] - 1]);
-    if (board[selected[1]][selected[0]].hasMoved == false) {
-        if (board[selected[1]][0].hasMoved == false && board[selected[1]][1] == 0 && board[selected[1]][2] == 0 && board[selected[1]][3] == 0) {
+    if (b[selected[1]][selected[0]].hasMoved == false) {
+        if (b[selected[1]][0].hasMoved == false && b[selected[1]][1] == 0 && b[selected[1]][2] == 0 && b[selected[1]][3] == 0) {
             moves.push([selected[1], 2]);
             castling = true;
         }
-        if (board[selected[1]][7].hasMoved == false && board[selected[1]][5] == 0 && board[selected[1]][6] == 0) {
+        if (b[selected[1]][7].hasMoved == false && b[selected[1]][5] == 0 && b[selected[1]][6] == 0) {
             moves.push([selected[1], 6]);
             castling = true;
         }
@@ -294,37 +292,44 @@ function king() {
     return moves;
 }
 
-function checkInvalid(moves) {
-    console.log(check((turn % 2 == 0) ? "white" : "black"));
+function checkInvalid(moves, b) {
+    const storeB = copyBoard(b);
+    for (let i = 0; i < moves.length; i++) {
+        b = applyMove(moves[i], copyBoard(b));
+        if (check((turn % 2 == 0) ? "white" : "black", b)) {
+       //     moves.splice(i, 1);
+            i--;
+        }
+        b = copyBoard(storeB);
+    }
     return moves;
 }
 
-function check(colour) {
+function check(colour, b) {
     let kingX = 0;
     let kingY = 0;
     let out = false;
-    for (let i = 0; i < board.length; i++) {
-        for (let j = 0; j < board[i].length; j++) {
-            if (board[i][j].n == "K" && board[i][j].c == colour) {
+    for (let i = 0; i < b.length; i++) {
+        for (let j = 0; j < b[i].length; j++) {
+            if (b[i][j].n == "K" && b[i][j].c == colour) {
                 kingX = i;
                 kingY = j;
             }
         }
     }
-    for (let i = 0; i < board.length; i++) {
-        for (let j = 0; j < board[i].length; j++) {
-            if (board[i][j] != 0 && board[i][j].c != colour) {
+    for (let i = 0; i < b.length; i++) {
+        for (let j = 0; j < b[i].length; j++) {
+            if (b[i][j] != 0 && b[i][j].c != colour) {
                 const store = selected;
                 selected = [j, i];
                 turn++;
-                let cMoves = getMoves();
+                castling = false;
+                enPassant = false;
+                let cMoves = getMoves(b);
                 turn--;
                 for (let k = 0; k < cMoves.length; k++) {
                     if (cMoves[k][1] == kingY && cMoves[k][0] == kingX) {
                         out = true;
-                        console.log(selected);
-                        console.log(cMoves);
-                        console.log(cMoves[k], kingX, kingY);
                     }
                 }
                 selected = store;
@@ -334,8 +339,8 @@ function check(colour) {
     return out;
 }
 
-displayGrid();
-displayPieces();
+displayGrid(board);
+displayPieces(board);
 //ctx.fillText("R", 0, 0);
 
 document.addEventListener("click", (e) => {
@@ -343,43 +348,96 @@ document.addEventListener("click", (e) => {
         let boardClientPos = $("board").getBoundingClientRect();
         if (selected[0] + selected[1] < 0) {
             selected = [Math.floor((e.clientX - boardClientPos.x) / 100), Math.floor((e.clientY - boardClientPos.y) / 100)];
-            updateSelected();
+            updateSelected(board);
         } else {
             let input = [Math.floor((e.clientX - boardClientPos.x) / 100), Math.floor((e.clientY - boardClientPos.y) / 100)];
             for (let i = 0; i < moves.length; i++) {
                 if (input[1] == moves[i][0] && input[0] == moves[i][1]) {
-                    if (enPassant && moves[i][1] - selected[i][0] != 0 && board[moves[i][0]][moves[i][1]] == 0) {
-                        board[selected[1]][moves[i][1]] = 0;
-                    }
-                    if (castling && Math.abs(selected[0] - moves[i][1]) > 1) {
-                        if (moves[i][1] == 2) {
-                            board[selected[1]][3] = board[selected[1]][0];
-                            board[selected[1]][0] = 0;
-                            board[selected[1]][3].hasMoved = true;
-                            board[selected[1]][3].moveCount++;
-                            board[selected[1]][3].x = 3;
-                        } else {
-                            board[selected[1]][5] = board[selected[1]][7];
-                            board[selected[1]][7] = 0;
-                            board[selected[1]][5].hasMoved = true;
-                            board[selected[1]][5].moveCount++;
-                            board[selected[1]][5].x = 5;
-                        }
-                    }
-                    board[moves[i][0]][moves[i][1]] = board[selected[1]][selected[0]];
-                    board[selected[1]][selected[0]] = 0;
-                    board[moves[i][0]][moves[i][1]].hasMoved = true;
-                    board[moves[i][0]][moves[i][1]].moveCount++;
-                    board[moves[i][0]][moves[i][1]].lastTurn = turn;
-                    board[moves[i][0]][moves[i][1]].x = moves[i][1];
-                    board[moves[i][0]][moves[i][1]].y = moves[i][0];
+                    board = applyMove(moves[i], board);
                     turn++;
                     break;
                 }
             }
             selected = [-1, -1];
-            displayGrid();
-            displayPieces();
+            displayGrid(board);
+            displayPieces(board);
+            if (turn % 2 == 1) {
+           //     computerMove();
+            }
         }
     }
 });
+
+function applyMove(move, b) {
+    if (enPassant && move[1] - selected[0] != 0 && b[move[0]][move[1]] == 0) {
+        b[selected[1]][moves[i][1]] = 0;
+    }
+    if (castling && Math.abs(selected[0] - move[1]) > 1) {
+        if (move[1] == 2) {
+            b[selected[1]][3] = b[selected[1]][0];
+            b[selected[1]][0] = 0;
+            b[selected[1]][3].hasMoved = true;
+            b[selected[1]][3].moveCount++;
+            b[selected[1]][3].x = 3;
+        } else {
+            b[selected[1]][5] = b[selected[1]][7];
+            b[selected[1]][7] = 0;
+            b[selected[1]][5].hasMoved = true;
+            b[selected[1]][5].moveCount++;
+            b[selected[1]][5].x = 5;
+        }
+    }
+    b[move[0]][move[1]] = b[selected[1]][selected[0]];
+    b[selected[1]][selected[0]] = 0;
+    b[move[0]][move[1]].hasMoved = true;
+    b[move[0]][move[1]].moveCount++;
+    b[move[0]][move[1]].lastTurn = turn;
+    b[move[0]][move[1]].x = move[1];
+    b[move[0]][move[1]].y = move[0];
+    return b;
+}
+
+function copyBoard(b) {
+    let out = new Array(b.length);
+    for (let i = 0; i < b.length; i++) {
+        out[i] = new Array(b[i].length);
+        for (let j = 0; j < b[i].length; j++) {
+            if (b[i][j] == 0) {
+                out[i][j] = 0;
+            } else {
+                out[i][j] = new piece(b[i][j].n, b[i][j].x, b[i][j].y, b[i][j].c);
+                out[i][j].hasMoved = b[i][j].hasMoved;
+                out[i][j].moveCount = b[i][j].moveCount;
+                out[i][j].lastTurn = b[i][j].lastTurn;
+            }
+        }
+    }
+    return out;
+}
+
+function computerMove() {
+    let c = (turn % 2 == 0) ? "white" : "black";
+    while (true) {
+        let x = Math.floor(Math.random() * 8);
+        let y = Math.floor(Math.random() * 8);
+        if (board[x][y] != 0 && board[x][y].c == c) {
+            selected = [y, x];
+            let moves = getMoves();
+            moves = checkInvalid(moves);
+            if (moves.length > 0) {
+                let indx = Math.floor(Math.random() * moves.length);
+             //   console.log(moves, indx, selected);
+                applyMove(moves[indx]);
+                selected = [-1, -1];
+                displayGrid();
+                displayPieces();
+                break;
+            }
+        }
+    }
+}
+
+function evaluateBoardState(b, c){
+    let score = 0;
+    
+}
