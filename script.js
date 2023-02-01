@@ -362,7 +362,7 @@ document.addEventListener("click", (e) => {
             displayGrid(board);
             displayPieces(board);
             if (turn % 2 == 1) {
-           //     computerMove();
+                computerMove();
             }
         }
     }
@@ -422,15 +422,14 @@ function computerMove() {
         let y = Math.floor(Math.random() * 8);
         if (board[x][y] != 0 && board[x][y].c == c) {
             selected = [y, x];
-            let moves = getMoves();
-            moves = checkInvalid(moves);
+            let moves = getMoves(board);
+            moves = checkInvalid(moves, board);
             if (moves.length > 0) {
                 let indx = Math.floor(Math.random() * moves.length);
-             //   console.log(moves, indx, selected);
-                applyMove(moves[indx]);
+                board = applyMove(moves[indx], board);
                 selected = [-1, -1];
-                displayGrid();
-                displayPieces();
+                displayGrid(board);
+                displayPieces(board);
                 break;
             }
         }
