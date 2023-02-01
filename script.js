@@ -7,37 +7,49 @@ class piece {
         this.hasMoved = false;
         this.moveCount = 0;
         this.lastTurn = -1;
-        this.img = document.getElementById("whiteKing");
+        this.img = document.getElementById("blackRook");
         switch (this.n) {
             case "P":
                 if (this.c == "white") {
                     this.img = document.getElementById("whitePawn");
-                }
+                } else {
+		    this.img = document.getElementById("blackPawn");
+		}
                 break;
             case "K":
                 if (this.c == "white") {
                     this.img = document.getElementById("whiteKing");
-                }
+                } else {
+		    this.img = document.getElementById("blackKing");
+		}
                 break;
             case "Q":
                 if (this.c == "white") {
                     this.img = document.getElementById("whiteQueen");
-                }
+                } else {
+		    this.img = document.getElementById("blackQueen");
+		}
                 break;
             case "B":
                 if (this.c == "white") {
                     this.img = document.getElementById("whiteBishop");
-                }
+                } else {
+		    this.img = document.getElementById("blackBishop");
+		}
                 break;
             case "Kn":
                 if (this.c == "white") {
                     this.img = document.getElementById("whiteKnight");
-                }
+                } else {
+		    this.img = document.getElementById("blackKnight");
+		}
                 break;
             case "R":
                 if (this.c == "white") {
                     this.img = document.getElementById("whiteRook");
-                }
+                } else {
+		    this.img = document.getElementById("blackRook");
+		}
                 break;
         }
     }
