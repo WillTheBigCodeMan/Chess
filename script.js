@@ -309,6 +309,14 @@ function check(colour, b) {
     let kingX = 0;
     let kingY = 0;
     let out = false;
+    let c = false;
+    let eP = false;
+    if(castling){
+        c = true;    
+    }
+    if(enPassant){
+        eP = true;
+    }
     for (let i = 0; i < b.length; i++) {
         for (let j = 0; j < b[i].length; j++) {
             if (b[i][j].n == "K" && b[i][j].c == colour) {
@@ -336,6 +344,8 @@ function check(colour, b) {
             }
         }
     }
+    enPassant = eP;
+    castling = c;
     return out;
 }
 
@@ -351,6 +361,7 @@ document.addEventListener("click", (e) => {
             updateSelected(board);
         } else {
             let input = [Math.floor((e.clientX - boardClientPos.x) / 100), Math.floor((e.clientY - boardClientPos.y) / 100)];
+            console.log(input);
             for (let i = 0; i < moves.length; i++) {
                 if (input[1] == moves[i][0] && input[0] == moves[i][1]) {
                     board = applyMove(moves[i], board);
@@ -362,15 +373,19 @@ document.addEventListener("click", (e) => {
             displayGrid(board);
             displayPieces(board);
             if (turn % 2 == 1) {
-                computerMove();
+               computerMove();
             }
         }
     }
 });
 
 function applyMove(move, b) {
-    if (enPassant && move[1] - selected[0] != 0 && b[move[0]][move[1]] == 0) {
-        b[selected[1]][moves[i][1]] = 0;
+    if(enPassant){
+        console.log(move, board[move[0]][move[1]], selected);
+    }
+    if (enPassant && move[0] - selected[1] != 0 && b[move[0]][move[1]] == 0) {
+        console.log("AAA", );
+        b[selected[1]][move[1]] = 0;
     }
     if (castling && Math.abs(selected[0] - move[1]) > 1) {
         if (move[1] == 2) {
@@ -428,6 +443,7 @@ function computerMove() {
                 let indx = Math.floor(Math.random() * moves.length);
                 board = applyMove(moves[indx], board);
                 selected = [-1, -1];
+                turn++;
                 displayGrid(board);
                 displayPieces(board);
                 break;
