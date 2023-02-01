@@ -7,13 +7,46 @@ class piece {
         this.hasMoved = false;
         this.moveCount = 0;
         this.lastTurn = -1;
+        this.img = document.getElementById("whiteKing");
+        switch (this.n) {
+            case "P":
+                if (this.c == "white") {
+                    this.img = document.getElementById("whitePawn");
+                }
+                break;
+            case "K":
+                if (this.c == "white") {
+                    this.img = document.getElementById("whiteKing");
+                }
+                break;
+            case "Q":
+                if (this.c == "white") {
+                    this.img = document.getElementById("whiteQueen");
+                }
+                break;
+            case "B":
+                if (this.c == "white") {
+                    this.img = document.getElementById("whiteBishop");
+                }
+                break;
+            case "Kn":
+                if (this.c == "white") {
+                    this.img = document.getElementById("whiteKnight");
+                }
+                break;
+            case "R":
+                if (this.c == "white") {
+                    this.img = document.getElementById("whiteRook");
+                }
+                break;
+        }
     }
     display(ctx) {
-        // ctx.drawImg(this.img, x*100,y*100, 100,100);
-        ctx.fillStyle = this.c;
-        ctx.font = "40px Arial"
-        ctx.textAlign = "center";
-        ctx.fillText(this.n, this.x * 100 + 50, this.y * 100 + 62);
+        ctx.drawImage(this.img, this.x * 100, this.y * 100, 100, 100);
+        // ctx.fillStyle = this.c;
+        // ctx.font = "40px Arial"
+        // ctx.textAlign = "center";
+        // ctx.fillText(this.n, this.x * 100 + 50, this.y * 100 + 62);
     }
 }
 
@@ -72,7 +105,7 @@ function displayMoves(b) {
     castling = false;
     if ((turn % 2 == 0 && b[selected[1]][selected[0]].c == "white") || (turn % 2 == 1 && b[selected[1]][selected[0]].c == "black")) {
         moves = getMoves(b);
-        moves = checkInvalid(moves,b);
+        moves = checkInvalid(moves, b);
         for (let i = 0; i < moves.length; i++) {
             if (b[moves[i][0]][moves[i][1]] == 0) {
                 ctx.beginPath();
@@ -297,7 +330,7 @@ function checkInvalid(moves, b) {
     for (let i = 0; i < moves.length; i++) {
         b = applyMove(moves[i], copyBoard(b));
         if (check((turn % 2 == 0) ? "white" : "black", b)) {
-       //     moves.splice(i, 1);
+            moves.splice(i, 1);
             i--;
         }
         b = copyBoard(storeB);
@@ -311,10 +344,10 @@ function check(colour, b) {
     let out = false;
     let c = false;
     let eP = false;
-    if(castling){
-        c = true;    
+    if (castling) {
+        c = true;
     }
-    if(enPassant){
+    if (enPassant) {
         eP = true;
     }
     for (let i = 0; i < b.length; i++) {
@@ -361,11 +394,23 @@ document.addEventListener("click", (e) => {
             updateSelected(board);
         } else {
             let input = [Math.floor((e.clientX - boardClientPos.x) / 100), Math.floor((e.clientY - boardClientPos.y) / 100)];
-            console.log(input);
             for (let i = 0; i < moves.length; i++) {
                 if (input[1] == moves[i][0] && input[0] == moves[i][1]) {
                     board = applyMove(moves[i], board);
                     turn++;
+                    if (checkMate(board)) {
+                        board = [
+                            [new piece("R", 0, 0, "black"), new piece("Kn", 1, 0, "black"), new piece("B", 2, 0, "black"), new piece("Q", 3, 0, "black"), new piece("K", 4, 0, "black"), new piece("B", 5, 0, "black"), new piece("Kn", 6, 0, "black"), new piece("R", 7, 0, "black")],
+                            [new piece("P", 0, 1, "black"), new piece("P", 1, 1, "black"), new piece("P", 2, 1, "black"), new piece("P", 3, 1, "black"), new piece("P", 4, 1, "black"), new piece("P", 5, 1, "black"), new piece("P", 6, 1, "black"), new piece("P", 7, 1, "black")],
+                            [0, 0, 0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0, 0, 0],
+                            [new piece("P", 0, 6, "white"), new piece("P", 1, 6, "white"), new piece("P", 2, 6, "white"), new piece("P", 3, 6, "white"), new piece("P", 4, 6, "white"), new piece("P", 5, 6, "white"), new piece("P", 6, 6, "white"), new piece("P", 7, 6, "white")],
+                            [new piece("R", 0, 7, "white"), new piece("Kn", 1, 7, "white"), new piece("B", 2, 7, "white"), new piece("Q", 3, 7, "white"), new piece("K", 4, 7, "white"), new piece("B", 5, 7, "white"), new piece("Kn", 6, 7, "white"), new piece("R", 7, 7, "white")]
+                        ];
+                        turn = 0;
+                    }
                     break;
                 }
             }
@@ -373,14 +418,14 @@ document.addEventListener("click", (e) => {
             displayGrid(board);
             displayPieces(board);
             if (turn % 2 == 1) {
-               computerMove();
+                computerMove();
             }
         }
     }
 });
 
 function applyMove(move, b) {
-    if(enPassant){
+    if (enPassant) {
         console.log(move, board[move[0]][move[1]], selected);
     }
     if (enPassant && move[0] - selected[1] != 0 && b[move[0]][move[1]] == 0) {
@@ -412,6 +457,33 @@ function applyMove(move, b) {
     return b;
 }
 
+function checkMate(b) {
+    let c = (turn % 2 == 0) ? "white" : "black";
+    let out = true;
+    if (check(c, b)) {
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                if (b[i][j] != 0 && b[i][j].c == c) {
+                    const storeC = selected;
+                    selected = [j, i];
+                    console.log(checkInvalid(getMoves(b), b));
+                    if (checkInvalid(getMoves(b), b).length > 0) {
+                        out = false;
+                        break;
+                    }
+                    selected = storeC;
+                }
+            }
+        }
+    } else {
+        out = false;
+    }
+    if (out) {
+        console.log(c, "lost");
+    }
+    return out;
+}
+
 function copyBoard(b) {
     let out = new Array(b.length);
     for (let i = 0; i < b.length; i++) {
@@ -432,6 +504,7 @@ function copyBoard(b) {
 
 function computerMove() {
     let c = (turn % 2 == 0) ? "white" : "black";
+    let count = 0;
     while (true) {
         let x = Math.floor(Math.random() * 8);
         let y = Math.floor(Math.random() * 8);
@@ -444,6 +517,7 @@ function computerMove() {
                 board = applyMove(moves[indx], board);
                 selected = [-1, -1];
                 turn++;
+                checkMate(board);
                 displayGrid(board);
                 displayPieces(board);
                 break;
@@ -452,7 +526,7 @@ function computerMove() {
     }
 }
 
-function evaluateBoardState(b, c){
+function evaluateBoardState(b, c) {
     let score = 0;
-    
+
 }
