@@ -7,59 +7,60 @@ class piece {
         this.hasMoved = false;
         this.moveCount = 0;
         this.lastTurn = -1;
-        this.img = document.getElementById("blackRook");
-        switch (this.n) {
-            case "P":
-                if (this.c == "white") {
-                    this.img = document.getElementById("whitePawn");
-                } else {
-		    this.img = document.getElementById("blackPawn");
-		}
-                break;
-            case "K":
-                if (this.c == "white") {
-                    this.img = document.getElementById("whiteKing");
-                } else {
-		    this.img = document.getElementById("blackKing");
-		}
-                break;
-            case "Q":
-                if (this.c == "white") {
-                    this.img = document.getElementById("whiteQueen");
-                } else {
-		    this.img = document.getElementById("blackQueen");
-		}
-                break;
-            case "B":
-                if (this.c == "white") {
-                    this.img = document.getElementById("whiteBishop");
-                } else {
-		    this.img = document.getElementById("blackBishop");
-		}
-                break;
-            case "Kn":
-                if (this.c == "white") {
-                    this.img = document.getElementById("whiteKnight");
-                } else {
-		    this.img = document.getElementById("blackKnight");
-		}
-                break;
-            case "R":
-                if (this.c == "white") {
-                    this.img = document.getElementById("whiteRook");
-                } else {
-		    this.img = document.getElementById("blackRook");
-		}
-                break;
-        }
+        this.img = getImg(this.n, this.c);
     }
     display(ctx) {
         ctx.drawImage(this.img, this.x * 100, this.y * 100, 100, 100);
-        // ctx.fillStyle = this.c;
-        // ctx.font = "40px Arial"
-        // ctx.textAlign = "center";
-        // ctx.fillText(this.n, this.x * 100 + 50, this.y * 100 + 62);
     }
+}
+
+function getImg(n, c) {
+    let img = "";
+    switch (n) {
+        case "P":
+            if (c == "white") {
+                img = document.getElementById("whitePawn");
+            } else {
+                img = document.getElementById("blackPawn");
+            }
+            break;
+        case "K":
+            if (c == "white") {
+                img = document.getElementById("whiteKing");
+            } else {
+                img = document.getElementById("blackKing");
+            }
+            break;
+        case "Q":
+            if (c == "white") {
+                img = document.getElementById("whiteQueen");
+            } else {
+                img = document.getElementById("blackQueen");
+            }
+            break;
+        case "B":
+            if (c == "white") {
+                img = document.getElementById("whiteBishop");
+            } else {
+                img = document.getElementById("blackBishop");
+            }
+            break;
+        case "Kn":
+            if (c == "white") {
+                img = document.getElementById("whiteKnight");
+            } else {
+                img = document.getElementById("blackKnight");
+            }
+            break;
+        case "R":
+            if (c == "white") {
+                img = document.getElementById("whiteRook");
+            } else {
+                img = document.getElementById("blackRook");
+            }
+            break;
+    }
+    return img;
 }
 
 const $ = (id) => document.getElementById(id);
@@ -161,6 +162,7 @@ function getMoves(b) {
 function pawn(b) {
     let mult = 1 + (-2 * ((turn + 1) % 2));
     let moves = [];
+    console.log(b, selected);
     if (b[selected[1] + mult][selected[0]] == 0) {
         moves.push([selected[1] + mult, selected[0]]);
     }
@@ -396,7 +398,6 @@ function check(colour, b) {
 
 displayGrid(board);
 displayPieces(board);
-//ctx.fillText("R", 0, 0);
 
 document.addEventListener("click", (e) => {
     if (e.target.id == "board") {
@@ -409,6 +410,10 @@ document.addEventListener("click", (e) => {
             for (let i = 0; i < moves.length; i++) {
                 if (input[1] == moves[i][0] && input[0] == moves[i][1]) {
                     board = applyMove(moves[i], board);
+                    console.log(evaluateBoardState(board, "white"));
+                    if ((moves[i][0] == 0 || moves[i][0] == 7) && board[moves[i][0]][moves[i][1]].n == "P") {
+                        board[moves[i][0]][moves[i][1]] = promote(board, moves[i])
+                    }
                     turn++;
                     if (checkMate(board)) {
                         board = [
@@ -437,11 +442,7 @@ document.addEventListener("click", (e) => {
 });
 
 function applyMove(move, b) {
-    if (enPassant) {
-        console.log(move, board[move[0]][move[1]], selected);
-    }
     if (enPassant && move[0] - selected[1] != 0 && b[move[0]][move[1]] == 0) {
-        console.log("AAA", );
         b[selected[1]][move[1]] = 0;
     }
     if (castling && Math.abs(selected[0] - move[1]) > 1) {
@@ -469,6 +470,17 @@ function applyMove(move, b) {
     return b;
 }
 
+function promote(b, move, newPiece) {
+    let out = b[move[0]][move[1]];
+    if (newPiece == null) {
+        out.n = prompt("Enter piece, Kn, B, R or Q");
+    } else {
+        out.n = newPiece;
+    }
+    out.img = getImg(out.n, out.c)
+    return out;
+}
+
 function checkMate(b) {
     let c = (turn % 2 == 0) ? "white" : "black";
     let out = true;
@@ -478,7 +490,6 @@ function checkMate(b) {
                 if (b[i][j] != 0 && b[i][j].c == c) {
                     const storeC = selected;
                     selected = [j, i];
-                    console.log(checkInvalid(getMoves(b), b));
                     if (checkInvalid(getMoves(b), b).length > 0) {
                         out = false;
                         break;
@@ -516,7 +527,50 @@ function copyBoard(b) {
 
 function computerMove() {
     let c = (turn % 2 == 0) ? "white" : "black";
-    let count = 0;
+    //randomComputerMove(c);
+    simpleAlgorithm(c);
+}
+
+function simpleAlgorithm(c) {
+    console.log("a");
+    let moveIndex;
+    let x;
+    let y;
+    let max = 0;
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            if (board[i][j] != 0 && board[i][j].c == c) {
+                selected = [j, i];
+                let moves = getMoves(board);
+                moves = checkInvalid(moves, board);
+                for (let k = 0; k < moves.length; k++) {
+                    let nB = applyMove(moves[k], board);
+                    if (evaluateBoardState(nB, c) > max) {
+                        max = evaluateBoardState(nB, c);
+                        x = i;
+                        y = j;
+                        moveIndex = k;
+                    }
+                }
+            }
+        }
+    }
+    selected = [y, x];
+    let moves = getMoves(board);
+    board = applyMove(moves[moveIndex], board);
+    if ((moves[moveIndex][0] == 0 || moves[moveIndex][0] == 7) && board[moves[moveIndex][0]][moves[moveIndex][1]].n == "P") {
+        let pieces = ["Q", "Kn", "R", "B"];
+        let newPiece = pieces[Math.floor(Math.random() * pieces.length)]
+        board[moves[moveIndex][0]][moves[moveIndex][1]] = promote(board, moves[moveIndex], newPiece)
+    }
+    selected = [-1, -1];
+    turn++;
+    checkMate(board);
+    displayGrid(board);
+    displayPieces(board);
+}
+
+function randomComputerMove(c) {
     while (true) {
         let x = Math.floor(Math.random() * 8);
         let y = Math.floor(Math.random() * 8);
@@ -527,6 +581,11 @@ function computerMove() {
             if (moves.length > 0) {
                 let indx = Math.floor(Math.random() * moves.length);
                 board = applyMove(moves[indx], board);
+                if ((moves[indx][0] == 0 || moves[indx][0] == 7) && board[moves[indx][0]][moves[indx][1]].n == "P") {
+                    let pieces = ["Q", "Kn", "R", "B"];
+                    let newPiece = pieces[Math.floor(Math.random() * pieces.length)]
+                    board[moves[indx][0]][moves[indx][1]] = promote(board, moves[indx], newPiece)
+                }
                 selected = [-1, -1];
                 turn++;
                 checkMate(board);
@@ -540,5 +599,47 @@ function computerMove() {
 
 function evaluateBoardState(b, c) {
     let score = 0;
+    let bS = 0;
+    let wS = 0;
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            if (b[i][j] != 0) {
+                if (b[i][j].c == "black") {
+                    bS += getPieceValue(b[i][j].n);
+                } else {
+                    wS += getPieceValue(b[i][j].n);
+                }
+                if (i >= 2 && i < 6 && j >= 2 && j < 6) {
+                    if (b[i][j].c == c) {
+                        score += 0.5;
+                    } else {
+                        score -= 0.3;
+                    }
+                }
+            }
+        }
+    }
+    if (c == "black") {
+        score += bS - wS;
+    } else {
+        score += wS - bS;
+    }
+    //if (check((c == "white") ? "black" : "white", b)) score += 10;
+    return score;
+}
 
+function getPieceValue(n) {
+    switch (n) {
+        case "P":
+            return 1;
+        case "Kn":
+            return 3;
+        case "B":
+            return 3;
+        case "R":
+            return 5;
+        case "Q":
+            return 9;
+    }
+    return 0;
 }
