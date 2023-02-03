@@ -162,7 +162,6 @@ function getMoves(b) {
 function pawn(b) {
     let mult = 1 + (-2 * ((turn + 1) % 2));
     let moves = [];
-    console.log(b, selected);
     if (b[selected[1] + mult][selected[0]] == 0) {
         moves.push([selected[1] + mult, selected[0]]);
     }
@@ -532,20 +531,19 @@ function computerMove() {
 }
 
 function simpleAlgorithm(c) {
-    console.log("a");
     let moveIndex;
     let x;
     let y;
-    let max = 0;
+    let max;
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             if (board[i][j] != 0 && board[i][j].c == c) {
                 selected = [j, i];
                 let moves = getMoves(board);
-                moves = checkInvalid(moves, board);
+                moves = checkInvalid(moves, copyBoard(board));
                 for (let k = 0; k < moves.length; k++) {
-                    let nB = applyMove(moves[k], board);
-                    if (evaluateBoardState(nB, c) > max) {
+                    let nB = applyMove(moves[k], copyBoard(board));
+                    if (evaluateBoardState(nB, c) > max || max == null) {
                         max = evaluateBoardState(nB, c);
                         x = i;
                         y = j;
@@ -557,6 +555,7 @@ function simpleAlgorithm(c) {
     }
     selected = [y, x];
     let moves = getMoves(board);
+    moves = checkInvalid(moves, copyBoard(board));
     board = applyMove(moves[moveIndex], board);
     if ((moves[moveIndex][0] == 0 || moves[moveIndex][0] == 7) && board[moves[moveIndex][0]][moves[moveIndex][1]].n == "P") {
         let pieces = ["Q", "Kn", "R", "B"];
@@ -601,6 +600,7 @@ function evaluateBoardState(b, c) {
     let score = 0;
     let bS = 0;
     let wS = 0;
+    const storeS = selected;
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             if (b[i][j] != 0) {
@@ -608,6 +608,23 @@ function evaluateBoardState(b, c) {
                     bS += getPieceValue(b[i][j].n);
                 } else {
                     wS += getPieceValue(b[i][j].n);
+                }
+                selected = [j, i];
+                const storeT = turn;
+                if(b[i][j].c == "white"&&turn%2 == 1){
+                    turn ++;
+                }
+                if(b[i][j].c == "black"&&turn%2 == 0){
+                    turn ++;
+                }
+                let moves = getMoves(copyBoard(b));
+                turn = storeT;
+                for (let k = 0; k < moves.length; k++) {
+                    if (b[moves[k][0]][moves[k][1]] != 0 && b[moves[k][0]][moves[k][1]].c == "black" && b[i][j].c == "white") {
+                        wS += getPieceValue(b[moves[k][0]][moves[k][1]].n) / 2;
+                    } else if(b[moves[k][0]][moves[k][1]] != 0 && b[moves[k][0]][moves[k][1]].c == "white" && b[i][j].c == "black"){
+                        bS += getPieceValue(b[moves[k][0]][moves[k][1]].n) / 2;
+                    }
                 }
                 if (i >= 2 && i < 6 && j >= 2 && j < 6) {
                     if (b[i][j].c == c) {
@@ -619,13 +636,18 @@ function evaluateBoardState(b, c) {
             }
         }
     }
+    selected = storeS;
     if (c == "black") {
         score += bS - wS;
     } else {
         score += wS - bS;
     }
-    //if (check((c == "white") ? "black" : "white", b)) score += 10;
+    turn++;
+    if (check((c == "black") ? "white" : "black", b)) score += 15;
+    turn--;
+    if (check((c == "white") ? "white" : "black", b)) score -= 15;
     return score;
+    // return 4;
 }
 
 function getPieceValue(n) {
