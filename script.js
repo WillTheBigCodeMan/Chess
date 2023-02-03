@@ -442,9 +442,10 @@ document.addEventListener("click", (e) => {
 
 function applyMove(move, b) {
     if (enPassant && move[0] - selected[1] != 0 && b[move[0]][move[1]] == 0) {
+        console.log("a", move);
         b[selected[1]][move[1]] = 0;
     }
-    if (castling && Math.abs(selected[0] - move[1]) > 1) {
+    if (castling && Math.abs(selected[0] - move[1]) > 1&&b[selected[1]][selected[0]].n == "K") {
         if (move[1] == 2) {
             b[selected[1]][3] = b[selected[1]][0];
             b[selected[1]][0] = 0;
@@ -557,6 +558,7 @@ function simpleAlgorithm(c) {
     let moves = getMoves(board);
     moves = checkInvalid(moves, copyBoard(board));
     board = applyMove(moves[moveIndex], board);
+    console.log(moves[moveIndex], selected, board);
     if ((moves[moveIndex][0] == 0 || moves[moveIndex][0] == 7) && board[moves[moveIndex][0]][moves[moveIndex][1]].n == "P") {
         let pieces = ["Q", "Kn", "R", "B"];
         let newPiece = pieces[Math.floor(Math.random() * pieces.length)]
