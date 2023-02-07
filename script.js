@@ -135,6 +135,8 @@ function displayMoves(b) {
 }
 
 function getMoves(b) {
+    enPassant = false;
+    castling = false;
     let moves = [];
     switch (b[selected[1]][selected[0]].n) {
         case "P":
@@ -379,7 +381,7 @@ function check(colour, b) {
                 turn++;
                 castling = false;
                 enPassant = false;
-                let cMoves = getMoves(b);
+                let cMoves = getMoves(copyBoard(b));
                 turn--;
                 for (let k = 0; k < cMoves.length; k++) {
                     if (cMoves[k][1] == kingY && cMoves[k][0] == kingX) {
@@ -442,10 +444,11 @@ document.addEventListener("click", (e) => {
 
 function applyMove(move, b) {
     if (enPassant && move[0] - selected[1] != 0 && b[move[0]][move[1]] == 0) {
-        console.log("a", move);
         b[selected[1]][move[1]] = 0;
+        console.log("E P", move);
     }
-    if (castling && Math.abs(selected[0] - move[1]) > 1&&b[selected[1]][selected[0]].n == "K") {
+    if (castling && Math.abs(selected[0] - move[1]) > 1) {
+        console.log("C", move);
         if (move[1] == 2) {
             b[selected[1]][3] = b[selected[1]][0];
             b[selected[1]][0] = 0;
@@ -484,13 +487,13 @@ function promote(b, move, newPiece) {
 function checkMate(b) {
     let c = (turn % 2 == 0) ? "white" : "black";
     let out = true;
-    if (check(c, b)) {
+    if (check(c, copyBoard(b))) {
         for (let i = 0; i < 8; i++) {
             for (let j = 0; j < 8; j++) {
                 if (b[i][j] != 0 && b[i][j].c == c) {
                     const storeC = selected;
                     selected = [j, i];
-                    if (checkInvalid(getMoves(b), b).length > 0) {
+                    if (checkInvalid(getMoves(copyBoard(b)), copyBoard(b)).length > 0) {
                         out = false;
                         break;
                     }
@@ -528,7 +531,21 @@ function copyBoard(b) {
 function computerMove() {
     let c = (turn % 2 == 0) ? "white" : "black";
     //randomComputerMove(c);
-    simpleAlgorithm(c);
+    //simpleAlgorithm(c);
+    let outPut = betaMax(copyBoard(board), c, 2, 0);
+    console.log(outPut);
+    selected = [outPut[1][0], outPut[1][1]];
+    let moves = getMoves(copyBoard(board));
+    moves = checkInvalid(moves, copyBoard(board));
+    board = applyMove(moves[outPut[0]], copyBoard(board));
+    if ((moves[outPut[0]][0] == 0 || moves[outPut[0]][0] == 7) && board[moves[outPut[0]][0]][moves[outPut[0]][1]].n == "P") {
+        board[moves[moveIndex][0]][moves[moveIndex][1]] = promote(board, moves[moveIndex], "Q")
+    }
+    selected = [-1, -1];
+    turn++;
+    checkMate(board);
+    displayGrid(board);
+    displayPieces(board);
 }
 
 function simpleAlgorithm(c) {
@@ -557,8 +574,7 @@ function simpleAlgorithm(c) {
     selected = [y, x];
     let moves = getMoves(board);
     moves = checkInvalid(moves, copyBoard(board));
-    board = applyMove(moves[moveIndex], board);
-    console.log(moves[moveIndex], selected, board);
+    board = applyMove(moves[moveIndex], copyBoard(board));
     if ((moves[moveIndex][0] == 0 || moves[moveIndex][0] == 7) && board[moves[moveIndex][0]][moves[moveIndex][1]].n == "P") {
         let pieces = ["Q", "Kn", "R", "B"];
         let newPiece = pieces[Math.floor(Math.random() * pieces.length)]
@@ -598,6 +614,50 @@ function randomComputerMove(c) {
     }
 }
 
+function betaMax(b, c, depth, currentDepth) {
+    if (currentDepth == depth) {
+        return evaluateBoardState(copyBoard(b), c);
+    }
+    let max, moveIndx, selectedOut, tot, count;
+    if (currentDepth == 0) {
+        max = -100;
+        moveIndx = -1;
+        selectedOut = [-1, -1];
+    } else {
+        tot = 0;
+        count = 0;
+    }
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            if (b[i][j] != 0 && b[i][j].c == c) {
+                selected = [j, i];
+                let moves = getMoves(copyBoard(b));
+                moves = checkInvalid(moves, copyBoard(b));
+                for (let k = 0; k < moves.length; k++) {
+                    turn++;
+                    let value = betaMax(applyMove(moves[k], applyMove(moves[k], copyBoard(b))), c == "white" ? "black" : "white", depth, currentDepth + 1);
+                    turn --;
+                    if (currentDepth == 0) {
+                        if (value > max) {
+                            max = value;
+                            moveIndx = k;
+                            selectedOut = [j, i];
+                        }
+                    } else {
+                        tot += value;
+                        count++;
+                    }
+                }
+            }
+        }
+    }
+    if (currentDepth == 0) {
+        return [moveIndx, selectedOut];
+    } else {
+        return (tot / count);
+    }
+}
+
 function evaluateBoardState(b, c) {
     let score = 0;
     let bS = 0;
@@ -613,18 +673,18 @@ function evaluateBoardState(b, c) {
                 }
                 selected = [j, i];
                 const storeT = turn;
-                if(b[i][j].c == "white"&&turn%2 == 1){
-                    turn ++;
+                if (b[i][j].c == "white" && turn % 2 == 1) {
+                    turn++;
                 }
-                if(b[i][j].c == "black"&&turn%2 == 0){
-                    turn ++;
+                if (b[i][j].c == "black" && turn % 2 == 0) {
+                    turn++;
                 }
                 let moves = getMoves(copyBoard(b));
                 turn = storeT;
                 for (let k = 0; k < moves.length; k++) {
                     if (b[moves[k][0]][moves[k][1]] != 0 && b[moves[k][0]][moves[k][1]].c == "black" && b[i][j].c == "white") {
                         wS += getPieceValue(b[moves[k][0]][moves[k][1]].n) / 2;
-                    } else if(b[moves[k][0]][moves[k][1]] != 0 && b[moves[k][0]][moves[k][1]].c == "white" && b[i][j].c == "black"){
+                    } else if (b[moves[k][0]][moves[k][1]] != 0 && b[moves[k][0]][moves[k][1]].c == "white" && b[i][j].c == "black") {
                         bS += getPieceValue(b[moves[k][0]][moves[k][1]].n) / 2;
                     }
                 }
