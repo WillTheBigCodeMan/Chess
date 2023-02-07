@@ -164,25 +164,28 @@ function getMoves(b) {
 function pawn(b) {
     let mult = 1 + (-2 * ((turn + 1) % 2));
     let moves = [];
-    if (b[selected[1] + mult][selected[0]] == 0) {
-        moves.push([selected[1] + mult, selected[0]]);
-    }
-    if (b[selected[1]][selected[0]].hasMoved == false && b[selected[1] + (2 * mult)][selected[0]] == 0 && moves.length > 0) {
-        moves.push([selected[1] + (2 * mult), selected[0]]);
-    }
-    if (selected[1] + mult >= 0 && selected[1] + mult < 8 && selected[0] + 1 < 8 && b[selected[1] + mult][selected[0] + 1] != 0 && b[selected[1] + mult][selected[0] + 1].c != b[selected[1]][selected[0]].c) {
-        moves.push([selected[1] + mult, selected[0] + 1]);
-    }
-    if (selected[1] + mult >= 0 && selected[1] + mult < 8 && selected[0] - 1 >= 0 && b[selected[1] + mult][selected[0] - 1] != 0 && b[selected[1] + mult][selected[0] - 1].c != b[selected[1]][selected[0]].c) {
-        moves.push([selected[1] + mult, selected[0] - 1]);
-    }
-    if (selected[0] + 1 < 8 && b[selected[1]][selected[0] + 1].n == "P" && b[selected[1]][selected[0] + 1].moveCount == 1 && (b[selected[1]][selected[0] + 1].y == 3 || b[selected[1]][selected[0] + 1].y == 4) && b[selected[1]][selected[0] + 1].c != b[selected[1]][selected[0]].c && b[selected[1]][selected[0] + 1].lastTurn == turn - 1) {
-        moves.push([selected[1] + mult, selected[0] + 1]);
-        enPassant = true;
-    }
-    if (selected[0] - 1 >= 0 && b[selected[1]][selected[0] - 1].n == "P" && b[selected[1]][selected[0] - 1].moveCount == 1 && (b[selected[1]][selected[0] - 1].y == 3 || b[selected[1]][selected[0] - 1].y == 4) && b[selected[1]][selected[0] - 1].c != b[selected[1]][selected[0]].c && b[selected[1]][selected[0] - 1].lastTurn == turn - 1) {
-        moves.push([selected[1] + mult, selected[0] - 1]);
-        enPassant = true;
+    console.log(mult, selected);
+    if (selected[1] + mult < 0 || selected[1] + mult > 8) {} else {
+        if (b[selected[1] + mult][selected[0]] == 0) {
+            moves.push([selected[1] + mult, selected[0]]);
+        }
+        if (selected[1] + (2 * mult) > 0&&selected[1] + (2 * mult) < 8&&b[selected[1]][selected[0]].hasMoved == false && b[selected[1] + (2 * mult)][selected[0]] == 0 && moves.length > 0) {
+            moves.push([selected[1] + (2 * mult), selected[0]]);
+        }
+        if (selected[1] + mult >= 0 && selected[1] + mult < 8 && selected[0] + 1 < 8 && b[selected[1] + mult][selected[0] + 1] != 0 && b[selected[1] + mult][selected[0] + 1].c != b[selected[1]][selected[0]].c) {
+            moves.push([selected[1] + mult, selected[0] + 1]);
+        }
+        if (selected[1] + mult >= 0 && selected[1] + mult < 8 && selected[0] - 1 >= 0 && b[selected[1] + mult][selected[0] - 1] != 0 && b[selected[1] + mult][selected[0] - 1].c != b[selected[1]][selected[0]].c) {
+            moves.push([selected[1] + mult, selected[0] - 1]);
+        }
+        if (selected[0] + 1 < 8 && b[selected[1]][selected[0] + 1].n == "P" && b[selected[1]][selected[0] + 1].moveCount == 1 && (b[selected[1]][selected[0] + 1].y == 3 || b[selected[1]][selected[0] + 1].y == 4) && b[selected[1]][selected[0] + 1].c != b[selected[1]][selected[0]].c && b[selected[1]][selected[0] + 1].lastTurn == turn - 1) {
+            moves.push([selected[1] + mult, selected[0] + 1]);
+            enPassant = true;
+        }
+        if (selected[0] - 1 >= 0 && b[selected[1]][selected[0] - 1].n == "P" && b[selected[1]][selected[0] - 1].moveCount == 1 && (b[selected[1]][selected[0] - 1].y == 3 || b[selected[1]][selected[0] - 1].y == 4) && b[selected[1]][selected[0] - 1].c != b[selected[1]][selected[0]].c && b[selected[1]][selected[0] - 1].lastTurn == turn - 1) {
+            moves.push([selected[1] + mult, selected[0] - 1]);
+            enPassant = true;
+        }
     }
     return moves;
 }
@@ -635,17 +638,22 @@ function betaMax(b, c, depth, currentDepth) {
                 moves = checkInvalid(moves, copyBoard(b));
                 for (let k = 0; k < moves.length; k++) {
                     turn++;
-                    let value = betaMax(applyMove(moves[k], applyMove(moves[k], copyBoard(b))), c == "white" ? "black" : "white", depth, currentDepth + 1);
-                    turn --;
-                    if (currentDepth == 0) {
-                        if (value > max) {
-                            max = value;
-                            moveIndx = k;
-                            selectedOut = [j, i];
+                    let newVal = evaluateBoardState(applyMove(moves[k], copyBoard(b)), c);
+                    turn--;
+                    if (newVal > 0.9 * evaluateBoardState(copyBoard(b))) {
+                        turn++;
+                        let value = betaMax(applyMove(moves[k], applyMove(moves[k], copyBoard(b))), c == "white" ? "black" : "white", depth, currentDepth + 1);
+                        turn--;
+                        if (currentDepth == 0) {
+                            if (value > max) {
+                                max = value;
+                                moveIndx = k;
+                                selectedOut = [j, i];
+                            }
+                        } else {
+                            tot += value;
+                            count++;
                         }
-                    } else {
-                        tot += value;
-                        count++;
                     }
                 }
             }
