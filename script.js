@@ -164,12 +164,11 @@ function getMoves(b) {
 function pawn(b) {
     let mult = 1 + (-2 * ((turn + 1) % 2));
     let moves = [];
-    console.log(mult, selected);
     if (selected[1] + mult < 0 || selected[1] + mult > 8) {} else {
         if (b[selected[1] + mult][selected[0]] == 0) {
             moves.push([selected[1] + mult, selected[0]]);
         }
-        if (selected[1] + (2 * mult) > 0&&selected[1] + (2 * mult) < 8&&b[selected[1]][selected[0]].hasMoved == false && b[selected[1] + (2 * mult)][selected[0]] == 0 && moves.length > 0) {
+        if (selected[1] + (2 * mult) > 0 && selected[1] + (2 * mult) < 8 && b[selected[1]][selected[0]].hasMoved == false && b[selected[1] + (2 * mult)][selected[0]] == 0 && moves.length > 0) {
             moves.push([selected[1] + (2 * mult), selected[0]]);
         }
         if (selected[1] + mult >= 0 && selected[1] + mult < 8 && selected[0] + 1 < 8 && b[selected[1] + mult][selected[0] + 1] != 0 && b[selected[1] + mult][selected[0] + 1].c != b[selected[1]][selected[0]].c) {
@@ -535,20 +534,24 @@ function computerMove() {
     let c = (turn % 2 == 0) ? "white" : "black";
     //randomComputerMove(c);
     //simpleAlgorithm(c);
-    let outPut = betaMax(copyBoard(board), c, 2, 0);
-    console.log(outPut);
-    selected = [outPut[1][0], outPut[1][1]];
-    let moves = getMoves(copyBoard(board));
-    moves = checkInvalid(moves, copyBoard(board));
-    board = applyMove(moves[outPut[0]], copyBoard(board));
-    if ((moves[outPut[0]][0] == 0 || moves[outPut[0]][0] == 7) && board[moves[outPut[0]][0]][moves[outPut[0]][1]].n == "P") {
-        board[moves[moveIndex][0]][moves[moveIndex][1]] = promote(board, moves[moveIndex], "Q")
+    let outPut = betaMax(copyBoard(board), c, 3, 0);
+    if (outPut[1][0] == -1) {
+        simpleAlgorithm(c);
+    } else {
+        console.log(outPut);
+        selected = [outPut[1][0], outPut[1][1]];
+        let moves = getMoves(copyBoard(board));
+        moves = checkInvalid(moves, copyBoard(board));
+        board = applyMove(moves[outPut[0]], copyBoard(board));
+        if ((moves[outPut[0]][0] == 0 || moves[outPut[0]][0] == 7) && board[moves[outPut[0]][0]][moves[outPut[0]][1]].n == "P") {
+            board[moves[moveIndex][0]][moves[moveIndex][1]] = promote(board, moves[moveIndex], "Q")
+        }
+        selected = [-1, -1];
+        turn++;
+        checkMate(board);
+        displayGrid(board);
+        displayPieces(board);
     }
-    selected = [-1, -1];
-    turn++;
-    checkMate(board);
-    displayGrid(board);
-    displayPieces(board);
 }
 
 function simpleAlgorithm(c) {
@@ -619,16 +622,16 @@ function randomComputerMove(c) {
 
 function betaMax(b, c, depth, currentDepth) {
     if (currentDepth == depth) {
-        return evaluateBoardState(copyBoard(b), c);
+        return evaluateBoardState(copyBoard(b), "black");
     }
-    let max, moveIndx, selectedOut, tot, count;
+    let max, moveIndx, selectedOut, min;
     if (currentDepth == 0) {
         max = -100;
         moveIndx = -1;
         selectedOut = [-1, -1];
     } else {
-        tot = 0;
-        count = 0;
+        min = 100;
+        max = 0;
     }
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
@@ -638,21 +641,17 @@ function betaMax(b, c, depth, currentDepth) {
                 moves = checkInvalid(moves, copyBoard(b));
                 for (let k = 0; k < moves.length; k++) {
                     turn++;
-                    let newVal = evaluateBoardState(applyMove(moves[k], copyBoard(b)), c);
+                    let value = betaMax(applyMove(moves[k], applyMove(moves[k], copyBoard(b))), c == "white" ? "black" : "white", depth, currentDepth + 1);
                     turn--;
-                    if (newVal > 0.9 * evaluateBoardState(copyBoard(b))) {
-                        turn++;
-                        let value = betaMax(applyMove(moves[k], applyMove(moves[k], copyBoard(b))), c == "white" ? "black" : "white", depth, currentDepth + 1);
-                        turn--;
-                        if (currentDepth == 0) {
-                            if (value > max) {
-                                max = value;
-                                moveIndx = k;
-                                selectedOut = [j, i];
-                            }
-                        } else {
-                            tot += value;
-                            count++;
+                    if (currentDepth == 0) {
+                        if (value > max) {
+                            max = value;
+                            moveIndx = k;
+                            selectedOut = [j, i];
+                        }
+                    } else {
+                        if (value < min) {
+                            min = value;
                         }
                     }
                 }
@@ -662,7 +661,7 @@ function betaMax(b, c, depth, currentDepth) {
     if (currentDepth == 0) {
         return [moveIndx, selectedOut];
     } else {
-        return (tot / count);
+        return min;
     }
 }
 
