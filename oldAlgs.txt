@@ -1,0 +1,203 @@
+function simpleAlgorithm(c) {
+    let moveIndex;
+    let x;
+    let y;
+    let max;
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            if (board[i][j] != 0 && board[i][j].c == c) {
+                selected = [j, i];
+                let moves = getMoves(board);
+                moves = checkInvalid(moves, copyBoard(board));
+                for (let k = 0; k < moves.length; k++) {
+                    let nB = applyMove(moves[k], copyBoard(board));
+                    if (evaluateBoardState(nB, c) > max || max == null) {
+                        max = evaluateBoardState(nB, c);
+                        x = i;
+                        y = j;
+                        moveIndex = k;
+                    }
+                }
+            }
+        }
+    }
+    selected = [y, x];
+    let moves = getMoves(board);
+    moves = checkInvalid(moves, copyBoard(board));
+    board = applyMove(moves[moveIndex], copyBoard(board));
+    if ((moves[moveIndex][0] == 0 || moves[moveIndex][0] == 7) && board[moves[moveIndex][0]][moves[moveIndex][1]].n == "P") {
+        let pieces = ["Q", "Kn", "R", "B"];
+        let newPiece = pieces[Math.floor(Math.random() * pieces.length)]
+        board[moves[moveIndex][0]][moves[moveIndex][1]] = promote(board, moves[moveIndex], newPiece)
+    }
+    selected = [-1, -1];
+    turn++;
+    checkMate(board);
+    displayGrid(board);
+    displayPieces(board);
+}
+
+function randomComputerMove(c) {
+    while (true) {
+        let x = Math.floor(Math.random() * 8);
+        let y = Math.floor(Math.random() * 8);
+        if (board[x][y] != 0 && board[x][y].c == c) {
+            selected = [y, x];
+            let moves = getMoves(board);
+            moves = checkInvalid(moves, board);
+            if (moves.length > 0) {
+                let indx = Math.floor(Math.random() * moves.length);
+                board = applyMove(moves[indx], board);
+                if ((moves[indx][0] == 0 || moves[indx][0] == 7) && board[moves[indx][0]][moves[indx][1]].n == "P") {
+                    let pieces = ["Q", "Kn", "R", "B"];
+                    let newPiece = pieces[Math.floor(Math.random() * pieces.length)]
+                    board[moves[indx][0]][moves[indx][1]] = promote(board, moves[indx], newPiece)
+                }
+                selected = [-1, -1];
+                turn++;
+                checkMate(board);
+                displayGrid(board);
+                displayPieces(board);
+                break;
+            }
+        }
+    }
+}
+
+function betaMax(b, c, depth, currentDepth) {
+    if (currentDepth == depth) {
+        return evaluateBoardState(copyBoard(b), "black");
+    }
+    let max, moveIndx, selectedOut, min;
+    if (currentDepth == 0) {
+        max = -100;
+        moveIndx = -1;
+        selectedOut = [-1, -1];
+    } else {
+        min = 100;
+        max = 0;
+    }
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            if (b[i][j] != 0 && b[i][j].c == c) {
+                selected = [j, i];
+                let moves = getMoves(copyBoard(b));
+                moves = checkInvalid(moves, copyBoard(b));
+                for (let k = 0; k < moves.length; k++) {
+                    turn++;
+                    let value = betaMax(applyMove(moves[k], applyMove(moves[k], copyBoard(b))), c == "white" ? "black" : "white", depth, currentDepth + 1);
+                    turn--;
+                    if (currentDepth == 0) {
+                        if (value > max) {
+                            max = value;
+                            moveIndx = k;
+                            selectedOut = [j, i];
+                        }
+                    } else {
+                        if (value < min) {
+                            min = value;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (currentDepth == 0) {
+        return [moveIndx, selectedOut];
+    } else {
+        return min;
+    }
+}
+
+function evaluateBoardState(b, c) {
+    let score = 0;
+    let bS = 0;
+    let wS = 0;
+    const storeS = selected;
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            if (b[i][j] != 0) {
+                if (b[i][j].c == "black") {
+                    bS += getPieceValue(b[i][j].n);
+                } else {
+                    wS += getPieceValue(b[i][j].n);
+                }
+                selected = [j, i];
+                const storeT = turn;
+                if (b[i][j].c == "white" && turn % 2 == 1) {
+                    turn++;
+                }
+                if (b[i][j].c == "black" && turn % 2 == 0) {
+                    turn++;
+                }
+                let moves = getMoves(copyBoard(b));
+                turn = storeT;
+                for (let k = 0; k < moves.length; k++) {
+                    if (b[moves[k][0]][moves[k][1]] != 0 && b[moves[k][0]][moves[k][1]].c == "black" && b[i][j].c == "white") {
+                        wS += getPieceValue(b[moves[k][0]][moves[k][1]].n) / 2;
+                    } else if (b[moves[k][0]][moves[k][1]] != 0 && b[moves[k][0]][moves[k][1]].c == "white" && b[i][j].c == "black") {
+                        bS += getPieceValue(b[moves[k][0]][moves[k][1]].n) / 2;
+                    }
+                }
+                if (i >= 2 && i < 6 && j >= 2 && j < 6) {
+                    if (b[i][j].c == c) {
+                        score += 0.5;
+                    } else {
+                        score -= 0.3;
+                    }
+                }
+            }
+        }
+    }
+    selected = storeS;
+    if (c == "black") {
+        score += bS - wS;
+    } else {
+        score += wS - bS;
+    }
+    turn++;
+    if (check((c == "black") ? "white" : "black", b)) score += 15;
+    turn--;
+    if (check((c == "white") ? "white" : "black", b)) score -= 15;
+    return score;
+    // return 4;
+}
+
+function getPieceValue(n) {
+    switch (n) {
+        case "P":
+            return 1;
+        case "Kn":
+            return 3;
+        case "B":
+            return 3;
+        case "R":
+            return 5;
+        case "Q":
+            return 9;
+    }
+    return 0;
+}
+
+let commentStore = {
+        //randomComputerMove(c);
+        //simpleAlgorithm(c);
+        // let outPut = betaMax(copyBoard(board), c, 3, 0);
+        // if (outPut[1][0] == -1) {
+        //     simpleAlgorithm(c);
+        // } else {
+        //     console.log(outPut);
+        //     selected = [outPut[1][0], outPut[1][1]];
+        //     let moves = getMoves(copyBoard(board));
+        //     moves = checkInvalid(moves, copyBoard(board));
+        //     board = applyMove(moves[outPut[0]], copyBoard(board));
+        //     if ((moves[outPut[0]][0] == 0 || moves[outPut[0]][0] == 7) && board[moves[outPut[0]][0]][moves[outPut[0]][1]].n == "P") {
+        //         board[moves[moveIndex][0]][moves[moveIndex][1]] = promote(board, moves[moveIndex], "Q")
+        //     }
+        //     selected = [-1, -1];
+        //     turn++;
+        //     checkMate(board);
+        //     displayGrid(board);
+        //     displayPieces(board);
+        // }
+    }
