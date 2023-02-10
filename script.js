@@ -10,7 +10,7 @@ class piece {
         this.img = getImg(this.n, this.c);
     }
     display(ctx) {
-        ctx.drawImage(this.img, this.x * 100, this.y * 100, 100, 100);
+        ctx.drawImage(this.img, this.x * 100 + 10, this.y * 100 + 10, 80, 80);
     }
 }
 
@@ -85,8 +85,18 @@ let castling = false;
 function displayGrid(b) {
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
-            ctx.fillStyle = ((i + j) % 2 == 1) ? "#804112" : "grey";
+            ctx.fillStyle = ((i + j) % 2 == 1) ? "#779556" : "#EBECD0";
             ctx.fillRect(i * 100, j * 100, 100, 100);
+        }
+    }
+}
+
+function updateSprites(){
+    for(let i = 0; i < 8; i++){
+        for(let j = 0; j < 8; j++){
+            if(board[i][j]!=0){
+                board[i][j].img = getImg(board[i][j].n,board[i][j].c);
+            }
         }
     }
 }
@@ -531,7 +541,7 @@ let positionCount = 0;
 function computerMove() {
     positionCount = 0;
     let c = (turn % 2 == 0) ? "white" : "black";
-    let output = minimaxRoot(3, board, true, c);
+    let output = minimaxRoot(5, board, true, c);
     selected = output[1];
     board = applyMove(output[0], copyBoard(board));
     if ((output[0][0] == 0 || output[0][0] == 7) && board[output[0][0]][output[0][1]].n == "P") {
