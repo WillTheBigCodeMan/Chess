@@ -413,7 +413,7 @@ document.addEventListener("click", (e) => {
             for (let i = 0; i < moves.length; i++) {
                 if (input[1] == moves[i][0] && input[0] == moves[i][1]) {
                     board = applyMove(moves[i], board);
-                    console.log(evaluateBoardState(board, "white"));
+                   // console.log(evaluateBoardState(board, "white"));
                     if ((moves[i][0] == 0 || moves[i][0] == 7) && board[moves[i][0]][moves[i][1]].n == "P") {
                         board[moves[i][0]][moves[i][1]] = promote(board, moves[i])
                     }
@@ -447,10 +447,8 @@ document.addEventListener("click", (e) => {
 function applyMove(move, b) {
     if (enPassant && move[0] - selected[1] != 0 && b[move[0]][move[1]] == 0) {
         b[selected[1]][move[1]] = 0;
-        console.log("E P", move);
     }
     if (castling && Math.abs(selected[0] - move[1]) > 1) {
-        console.log("C", move);
         if (move[1] == 2) {
             b[selected[1]][3] = b[selected[1]][0];
             b[selected[1]][0] = 0;
@@ -529,110 +527,60 @@ function copyBoard(b) {
     }
     return out;
 }
-
+let positionCount = 0;
 function computerMove() {
+    positionCount = 0;
     let c = (turn % 2 == 0) ? "white" : "black";
-    //randomComputerMove(c);
-    //simpleAlgorithm(c);
-    let outPut = betaMax(copyBoard(board), c, 3, 0);
-    if (outPut[1][0] == -1) {
-        simpleAlgorithm(c);
-    } else {
-        console.log(outPut);
-        selected = [outPut[1][0], outPut[1][1]];
-        let moves = getMoves(copyBoard(board));
-        moves = checkInvalid(moves, copyBoard(board));
-        board = applyMove(moves[outPut[0]], copyBoard(board));
-        if ((moves[outPut[0]][0] == 0 || moves[outPut[0]][0] == 7) && board[moves[outPut[0]][0]][moves[outPut[0]][1]].n == "P") {
-            board[moves[moveIndex][0]][moves[moveIndex][1]] = promote(board, moves[moveIndex], "Q")
-        }
-        selected = [-1, -1];
-        turn++;
-        checkMate(board);
-        displayGrid(board);
-        displayPieces(board);
-    }
-}
-
-function simpleAlgorithm(c) {
-    let moveIndex;
-    let x;
-    let y;
-    let max;
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-            if (board[i][j] != 0 && board[i][j].c == c) {
-                selected = [j, i];
-                let moves = getMoves(board);
-                moves = checkInvalid(moves, copyBoard(board));
-                for (let k = 0; k < moves.length; k++) {
-                    let nB = applyMove(moves[k], copyBoard(board));
-                    if (evaluateBoardState(nB, c) > max || max == null) {
-                        max = evaluateBoardState(nB, c);
-                        x = i;
-                        y = j;
-                        moveIndex = k;
-                    }
-                }
-            }
-        }
-    }
-    selected = [y, x];
-    let moves = getMoves(board);
-    moves = checkInvalid(moves, copyBoard(board));
-    board = applyMove(moves[moveIndex], copyBoard(board));
-    if ((moves[moveIndex][0] == 0 || moves[moveIndex][0] == 7) && board[moves[moveIndex][0]][moves[moveIndex][1]].n == "P") {
-        let pieces = ["Q", "Kn", "R", "B"];
-        let newPiece = pieces[Math.floor(Math.random() * pieces.length)]
-        board[moves[moveIndex][0]][moves[moveIndex][1]] = promote(board, moves[moveIndex], newPiece)
+    let output = minimaxRoot(3, board, true, c);
+    selected = output[1];
+    board = applyMove(output[0], copyBoard(board));
+    if ((output[0][0] == 0 || output[0][0] == 7) && board[output[0][0]][output[0][1]].n == "P") {
+        board[output[0][0]][output[0][1]] = promote(board, output[0], "Q")
     }
     selected = [-1, -1];
     turn++;
     checkMate(board);
     displayGrid(board);
     displayPieces(board);
+    console.log(positionCount);
 }
 
-function randomComputerMove(c) {
-    while (true) {
-        let x = Math.floor(Math.random() * 8);
-        let y = Math.floor(Math.random() * 8);
-        if (board[x][y] != 0 && board[x][y].c == c) {
-            selected = [y, x];
-            let moves = getMoves(board);
-            moves = checkInvalid(moves, board);
-            if (moves.length > 0) {
-                let indx = Math.floor(Math.random() * moves.length);
-                board = applyMove(moves[indx], board);
-                if ((moves[indx][0] == 0 || moves[indx][0] == 7) && board[moves[indx][0]][moves[indx][1]].n == "P") {
-                    let pieces = ["Q", "Kn", "R", "B"];
-                    let newPiece = pieces[Math.floor(Math.random() * pieces.length)]
-                    board[moves[indx][0]][moves[indx][1]] = promote(board, moves[indx], newPiece)
-                }
-                selected = [-1, -1];
-                turn++;
-                checkMate(board);
-                displayGrid(board);
-                displayPieces(board);
-                break;
-            }
+var evaluateBoard = function (b) {
+    var totalEvaluation = 0;
+    for (var i = 0; i < 8; i++) {
+        for (var j = 0; j < 8; j++) {
+            totalEvaluation = totalEvaluation + getPieceValue(b[i][j]);
         }
     }
-}
+    return totalEvaluation;
+};
 
-function betaMax(b, c, depth, currentDepth) {
-    if (currentDepth == depth) {
-        return evaluateBoardState(copyBoard(b), "black");
+var getPieceValue = function (piece) {
+    if (piece === 0) {
+        return 0;
     }
-    let max, moveIndx, selectedOut, min;
-    if (currentDepth == 0) {
-        max = -100;
-        moveIndx = -1;
-        selectedOut = [-1, -1];
-    } else {
-        min = 100;
-        max = 0;
-    }
+    var getAbsoluteValue = function (piece) {
+        if (piece.n === 'P') {
+            return 10;
+        } else if (piece.n === 'R') {
+            return 50;
+        } else if (piece.n === 'Kn') {
+            return 30;
+        } else if (piece.n === 'B') {
+            return 30;
+        } else if (piece.n === 'Q') {
+            return 90;
+        } else if (piece.n === 'K') {
+            return 900;
+        }
+    };
+
+    var absoluteValue = getAbsoluteValue(piece, piece.c === 'white');
+    return piece.c === 'white' ? absoluteValue : -absoluteValue;
+};
+
+function minimaxRoot(depth, b, isMaxing, c) {
+    let possibleMoves = [];
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             if (b[i][j] != 0 && b[i][j].c == c) {
@@ -640,97 +588,76 @@ function betaMax(b, c, depth, currentDepth) {
                 let moves = getMoves(copyBoard(b));
                 moves = checkInvalid(moves, copyBoard(b));
                 for (let k = 0; k < moves.length; k++) {
-                    turn++;
-                    let value = betaMax(applyMove(moves[k], applyMove(moves[k], copyBoard(b))), c == "white" ? "black" : "white", depth, currentDepth + 1);
-                    turn--;
-                    if (currentDepth == 0) {
-                        if (value > max) {
-                            max = value;
-                            moveIndx = k;
-                            selectedOut = [j, i];
-                        }
-                    } else {
-                        if (value < min) {
-                            min = value;
-                        }
-                    }
+                    possibleMoves.push([moves[k],
+                        [j, i]
+                    ]);
                 }
             }
         }
     }
-    if (currentDepth == 0) {
-        return [moveIndx, selectedOut];
-    } else {
-        return min;
+    console.log(possibleMoves);
+    let highestValue = -9999;
+    let bestMove;
+    for (let i = 0; i < possibleMoves.length; i++) {
+        selected = possibleMoves[i][1];
+        turn++;
+        let value = minimax(depth - 1, applyMove(possibleMoves[i][0], copyBoard(b)), -10000, 10000, !isMaxing, (c=="black" ? "white" : "black"));
+        turn--;
+        if (value >= highestValue) {
+            highestValue = value;
+            bestMove = possibleMoves[i];
+        }
     }
+    return bestMove;
 }
 
-function evaluateBoardState(b, c) {
-    let score = 0;
-    let bS = 0;
-    let wS = 0;
-    const storeS = selected;
+function minimax(depth, b, alpha, beta, isMaxing, c){
+    positionCount ++;
+    if(depth == 0){
+        return -evaluateBoard(b);
+    }
+
+    let possibleMoves = [];
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
-            if (b[i][j] != 0) {
-                if (b[i][j].c == "black") {
-                    bS += getPieceValue(b[i][j].n);
-                } else {
-                    wS += getPieceValue(b[i][j].n);
-                }
+            if (b[i][j] != 0 && b[i][j].c == c) {
                 selected = [j, i];
-                const storeT = turn;
-                if (b[i][j].c == "white" && turn % 2 == 1) {
-                    turn++;
-                }
-                if (b[i][j].c == "black" && turn % 2 == 0) {
-                    turn++;
-                }
                 let moves = getMoves(copyBoard(b));
-                turn = storeT;
+                moves = checkInvalid(moves, copyBoard(b));
                 for (let k = 0; k < moves.length; k++) {
-                    if (b[moves[k][0]][moves[k][1]] != 0 && b[moves[k][0]][moves[k][1]].c == "black" && b[i][j].c == "white") {
-                        wS += getPieceValue(b[moves[k][0]][moves[k][1]].n) / 2;
-                    } else if (b[moves[k][0]][moves[k][1]] != 0 && b[moves[k][0]][moves[k][1]].c == "white" && b[i][j].c == "black") {
-                        bS += getPieceValue(b[moves[k][0]][moves[k][1]].n) / 2;
-                    }
-                }
-                if (i >= 2 && i < 6 && j >= 2 && j < 6) {
-                    if (b[i][j].c == c) {
-                        score += 0.5;
-                    } else {
-                        score -= 0.3;
-                    }
+                    possibleMoves.push([moves[k],
+                        [j, i]
+                    ]);
                 }
             }
         }
     }
-    selected = storeS;
-    if (c == "black") {
-        score += bS - wS;
+    console.log(possibleMoves);
+    if(isMaxing){
+        let bestMove = -9999;
+        for(let i = 0; i < possibleMoves.length; i++){
+            selected = possibleMoves[i][1];
+            turn++;
+            bestMove = Math.max(bestMove, minimax(depth - 1, applyMove(possibleMoves[i][0], copyBoard(b)), alpha, beta, !isMaxing, (c=="black" ? "white" : "black")));
+            turn--;
+            alpha = Math.max(alpha, bestMove);
+            if(beta <= alpha){
+                return bestMove;
+            }
+        }
+        return bestMove;
     } else {
-        score += wS - bS;
+        let bestMove = 9999;
+        for(let i = 0; i < possibleMoves.length; i++){
+            selected = possibleMoves[i][1];
+            turn++;
+            bestMove = Math.min(bestMove, minimax(depth - 1, applyMove(possibleMoves[i][0], copyBoard(b)), alpha, beta, !isMaxing, (c=="black" ? "white" : "black")));
+            turn--;
+            beta = Math.min(beta, bestMove);
+            if(beta <= alpha){
+                return bestMove;
+            }
+        }
+        return bestMove;
     }
-    turn++;
-    if (check((c == "black") ? "white" : "black", b)) score += 15;
-    turn--;
-    if (check((c == "white") ? "white" : "black", b)) score -= 15;
-    return score;
-    // return 4;
-}
-
-function getPieceValue(n) {
-    switch (n) {
-        case "P":
-            return 1;
-        case "Kn":
-            return 3;
-        case "B":
-            return 3;
-        case "R":
-            return 5;
-        case "Q":
-            return 9;
-    }
-    return 0;
 }
