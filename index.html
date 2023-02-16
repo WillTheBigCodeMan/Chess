@@ -2,41 +2,40 @@
 <html lang="en">
 
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Chess</title>
-   <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-   <h1>Chess</h1>
-   <canvas id="board" width="800" height="800"></canvas>
-   <img id="whitePawn" class="pieceImg" src="Pieces/White_Pawn.png">
-   <img id="whiteKing" class="pieceImg" src="Pieces/White_King.png">
-   <img id="whiteBishop" class="pieceImg" src="Pieces/White_Bishop.png">
-   <img id="whiteKnight" class="pieceImg" src="Pieces/White_Knight.png">
-   <img id="whiteQueen" class="pieceImg" src="Pieces/White_Queen.png">
-   <img id="whiteRook" class="pieceImg" src="Pieces/White_Rook.png">
-   <img id="blackPawn" class="pieceImg" src="Pieces/Black_Pawn.png">
-   <img id="blackKing" class="pieceImg" src="Pieces/Black_King.png">
-   <img id="blackBishop" class="pieceImg" src="Pieces/Black_Bishop.png">
-   <img id="blackKnight" class="pieceImg" src="Pieces/Black_Knight.png">
-   <img id="blackQueen" class="pieceImg" src="Pieces/Black_Queen.png">
-   <img id="blackRook" class="pieceImg" src="Pieces/Black_Rook.png">
-   <button onclick="swapSprites()">Swap Sprites</button>
+  <h1>Chess</h1>
+  <canvas id="board" width="800" height="800"></canvas>
+  <img id="whitePawn" class="pieceImg" src="Pieces/White_Pawn.png">
+  <img id="whiteKing" class="pieceImg" src="Pieces/White_King.png">
+  <img id="whiteBishop" class="pieceImg" src="Pieces/White_Bishop.png">
+  <img id="whiteKnight" class="pieceImg" src="Pieces/White_Knight.png">
+  <img id="whiteQueen" class="pieceImg" src="Pieces/White_Queen.png">
+  <img id="whiteRook" class="pieceImg" src="Pieces/White_Rook.png">
+  <img id="blackPawn" class="pieceImg" src="Pieces/Black_Pawn.png">
+  <img id="blackKing" class="pieceImg" src="Pieces/Black_King.png">
+  <img id="blackBishop" class="pieceImg" src="Pieces/Black_Bishop.png">
+  <img id="blackKnight" class="pieceImg" src="Pieces/Black_Knight.png">
+  <img id="blackQueen" class="pieceImg" src="Pieces/Black_Queen.png">
+  <img id="blackRook" class="pieceImg" src="Pieces/Black_Rook.png">
+  <button onclick="swapSprites()">Swap Sprites</button>
 </body>
 <script src="script.js"></script>
 <script>
-   const badImages = ["Pieces/White_Pawn.png","Pieces/White_King.png","Pieces/White_Bishop.png","Pieces/White_Knight.png","Pieces/White_Queen.png","Pieces/White_Rook.png","Pieces/Black_Pawn.png","Pieces/Black_King.png","Pieces/Black_Bishop.png","Pieces/Black_Knight.png","Pieces/Black_Queen.png","Pieces/Black_Rook.png"];
-   const goodImages = ["Pieces/w_pawn_png_256px.png","Pieces/w_king_png_256px.png","Pieces/w_bishop_png_256px.png","Pieces/w_knight_png_256px.png","Pieces/w_queen_png_256px.png","Pieces/w_rook_png_256px.png","Pieces/b_pawn_png_256px.png","Pieces/b_king_png_256px.png","Pieces/b_bishop_png_256px.png","Pieces/b_knight_png_256px.png","Pieces/b_queen_png_256px.png","Pieces/b_rook_png_256px.png"];
-   const ids = ["whitePawn","whiteKing","whiteBishop","whiteKnight","whiteQueen","whiteRook","blackPawn","blackKing","blackBishop","blackKnight","blackQueen","blackRook"];
-   let isBad = true;
-   function swapSprites(){
-      for(let i = 0; i < ids.length; i++){
-         document.getElementById(ids[i]).src = (isBad) ? goodImages[i] : badImages[i];
-      }
-      updateSprites();
-      displayBoard();
-      displayGrid();
-   }
+  const badImages = ["Pieces/White_Pawn.png", "Pieces/White_King.png", "Pieces/White_Bishop.png", "Pieces/White_Knight.png", "Pieces/White_Queen.png", "Pieces/White_Rook.png", "Pieces/Black_Pawn.png", "Pieces/Black_King.png", "Pieces/Black_Bishop.png", "Pieces/Black_Knight.png", "Pieces/Black_Queen.png", "Pieces/Black_Rook.png"];
+  const goodImages = ["Pieces/w_pawn_png_256px.png", "Pieces/w_king_png_256px.png", "Pieces/w_bishop_png_256px.png", "Pieces/w_knight_png_256px.png", "Pieces/w_queen_png_256px.png", "Pieces/w_rook_png_256px.png", "Pieces/b_pawn_png_256px.png", "Pieces/b_king_png_256px.png", "Pieces/b_bishop_png_256px.png", "Pieces/b_knight_png_256px.png", "Pieces/b_queen_png_256px.png", "Pieces/b_rook_png_256px.png"];
+  const ids = ["whitePawn", "whiteKing", "whiteBishop", "whiteKnight", "whiteQueen", "whiteRook", "blackPawn", "blackKing", "blackBishop", "blackKnight", "blackQueen", "blackRook"];
+  let isBad = true;
+  function swapSprites() {
+    for (let i = 0; i < ids.length; i++) {
+      document.getElementById(ids[i]).src = (isBad) ? goodImages[i] : badImages[i];
+    }
+    updateSprites();
+    isBad = !isBad;
+  }
 </script>
